@@ -1,0 +1,64 @@
+@font-face {
+  font-family: 'Quicksand';
+  src: url('../images/quicksand.woff2') format('woff2'),
+       url('../images/quicksand.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BucThu';
+  src: url('../images/bucthu.woff2') format('woff2'),
+       url('../images/bucthu.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Belinda Avenue';
+  src: url('../images/belinda-avenue.woff2') format('woff2'),
+       url('../images/belinda-avenue.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HoaTay1';
+  src: url('../images/hoatay1.woff2') format('woff2'),
+       url('../images/hoatay1.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Carlytte';
+  src: url('../images/carlytte.woff2') format('woff2'),
+       url('../images/carlytte.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'The Artisan';
+  src: url('../images/the-artisan.woff2') format('woff2'),
+       url('../images/the-artisan.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('../images/playfairdisplay.woff2') format('woff2'),
+       url('../images/playfairdisplay.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'The Hamstter';
+  src: url('../images/the-hamstter.woff2') format('woff2'),
+       url('../images/the-hamstter.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aquarelle';
+  src: url('../images/aquarelle.woff2') format('woff2'),
+       url('../images/aquarelle.woff') format('woff');
+  font-display: swap;
+}
