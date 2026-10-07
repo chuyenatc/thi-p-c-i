@@ -36,6 +36,16 @@ window.WEDDING_MAP_URL = "https://maps.app.goo.gl/link-cua-ban";
 
 Có thể dùng link **Chia sẻ** từ Google Maps. Nếu để trống, nút **Xem đường đi** sẽ mở chỉ đường tới địa chỉ đang ghi trên thiệp.
 
+## Thay nhạc nền
+
+Tải file nhạc MP3 vào thư mục `music` bên trong `thi-p-c-i` (tạo thư mục nếu chưa có). Mở `scripts/guestbook-config.js` và thay `WEDDING_MUSIC_URL` bằng đường dẫn tương đối từ thư mục `thi-p-c-i`, gồm cả tên file:
+
+```js
+window.WEDDING_MUSIC_URL = "music/chuynn.mp3";
+```
+
+Ví dụ, nếu file được đặt tại `thi-p-c-i/music/chuynn.mp3`, dùng đúng đường dẫn ở trên. Bạn cũng có thể dùng URL trực tiếp bắt đầu bằng `https://`. Lưu file cấu hình rồi tải lại trang để nghe nhạc mới.
+
 ## Thay ảnh cô dâu chú rể
 
 Trong thư mục `images`, thay ảnh bằng ảnh mới nhưng giữ nguyên tên file và phần mở rộng để thiệp tự cập nhật:
@@ -58,7 +68,7 @@ Giữ nguyên đúng đuôi `.jpg` hoặc `.png`. Thay xong, tải lại website
 
 ## Ghi chú
 
-- Các nút chỉnh sửa/lưu mẫu, nhãn Made with CineLove và các nút gửi quà/bắn tim đã bị gỡ khỏi trang.
+- Các nút chỉnh sửa/lưu mẫu, thêm vào yêu thích, nhãn Made with CineLove và các nút gửi quà/bắn tim đã bị gỡ khỏi trang.
 - Bản đồ được thay bằng nút **Xem đường đi** màu hồng; nút mở chỉ đường Google Maps trong tab mới.
 - RSVP lưu họ tên, lựa chọn tham dự/từ chối, số lượng người và thời gian gửi vào tab **Xác nhận tham dự**.
 - Nhạc và bản đồ cần kết nối Internet.

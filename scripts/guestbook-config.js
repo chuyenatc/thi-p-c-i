@@ -1,4 +1,6 @@
 window.WEDDING_GUESTBOOK_ENDPOINT = "";
+// Đường dẫn tương đối tới file nhạc trong thư mục music.
+window.WEDDING_MUSIC_URL = "music/chuynn.mp3";
 window.WEDDING_MAP_URL = "https://www.google.com/maps/place/20%C2%B054'39.6%22N+105%C2%B047'46.6%22E/@20.911016,105.7937061,17z/data=!3m1!4b1!4m4!3m3!8m2!3d20.911011!4d105.796281?entry=ttu&g_ep=EgoyMDI2MTAwNC4wIKXMDSoASAFQAw%3D%3D";
 window.WEDDING_PHOTO_FILES = {
   "0660702c-af3c-42e6-8978-b23bf1e51c39.jpg": "images/anh1.jpg",

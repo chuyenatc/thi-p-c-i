@@ -4,7 +4,7 @@
   const style = document.createElement("style");
   style.textContent = `
     .watermark,
-    .fixed.top-2.left-2.z-50,
+    .fixed.top-2.left-2,
     #animation-gift-preview-btn,
     #cinelove-gift-button,
     #cinelove-like-button,
@@ -92,6 +92,50 @@
   let wishList = null;
   let status = null;
   let latestWishes = [];
+
+  function setupMusic() {
+    const musicUrl = String(window.WEDDING_MUSIC_URL || "").trim();
+    if (!musicUrl) return;
+
+    const audio = document.querySelector("#app-view-index audio");
+    if (!audio) {
+      console.error("Wedding music audio element is missing.");
+      return;
+    }
+
+    if (audio.getAttribute("src") !== musicUrl) {
+      audio.setAttribute("src", musicUrl);
+      audio.load();
+    }
+  }
+
+  function removeDesignActions() {
+    const designActionLabels = new Set([
+      "lưu thiết kế",
+      "chỉnh sửa thiết kế",
+      "lưu mẫu này",
+      "chỉnh sửa mẫu này",
+      "thêm vào yêu thích",
+    ]);
+
+    document.querySelectorAll('button, [role="button"]').forEach((button) => {
+      const labels = [
+        button.textContent,
+        button.getAttribute("aria-label"),
+        button.getAttribute("title"),
+      ];
+      const matchesDesignAction = labels.some((label) =>
+        designActionLabels.has(
+          String(label || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLocaleLowerCase("vi")
+        )
+      );
+
+      if (matchesDesignAction) button.remove();
+    });
+  }
 
   function endpoint() {
     return String(window.WEDDING_GUESTBOOK_ENDPOINT || "").trim();
@@ -531,14 +575,18 @@
     true
   );
 
+  setupMusic();
+  removeDesignActions();
   setupGuestbook();
   replaceWeddingPhotos();
   document.addEventListener("submit", handleRsvpSubmit, true);
   const observer = new MutationObserver(() => {
+    setupMusic();
     setupGuestbook();
     setupMapsButton();
     cleanMapPlaceholders();
     replaceWeddingPhotos();
+    removeDesignActions();
   });
   observer.observe(document.body, {
     attributes: true,
