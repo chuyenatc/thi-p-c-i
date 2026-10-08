@@ -2,6 +2,142 @@ window.WEDDING_GUESTBOOK_ENDPOINT = "";
 // Đường dẫn tương đối tới file nhạc trong thư mục music.
 window.WEDDING_MUSIC_URL = "music/chuynn.mp3";
 window.WEDDING_MAP_URL = "https://www.google.com/maps/place/20%C2%B054'39.6%22N+105%C2%B047'46.6%22E/@20.911016,105.7937061,17z/data=!3m1!4b1!4m4!3m3!8m2!3d20.911011!4d105.796281?entry=ttu&g_ep=EgoyMDI2MTAwNC4wIKXMDSoASAFQAw%3D%3D";
+
+// Sửa thông tin thiệp tại đây. Với các đoạn văn bên dưới, giữ nguyên "match"
+// và chỉ sửa nội dung trong "text".
+window.WEDDING_INFO = {
+  pageTitle: "Thiệp cưới Ngọc Vân & Trung Tuyển",
+  coverHeading: "WEDDING INVITATION",
+  invitationHeading: "Thiệp mời cưới",
+  brideShortName: "Ngọc Vân",
+  groomShortName: "Trung Tuyển",
+  invitationSectionHeading: "INVITATION",
+  groomParentsHeading: "Nhà Trai",
+  groomFather: "Ông: Nguyễn Trung Tuyến",
+  groomMother: "Bà : Lê Thị Xuân",
+  brideParentsHeading: "Nhà Gái",
+  brideFather: "Ông : Nghiêm Phú Thắng",
+  brideMother: "Bà : Vũ Thị Thảo",
+  brideFullName: "Nguyễn Ngọc Vân",
+  groomFullName: "Nguyễn Trung Tuyển",
+  brideHometown: "TP. Hà Nội",
+  groomHometown: "TP. Hà Nội",
+  receptionTitle: "Tiệc mừng lễ thành hôn",
+  ceremonyTime: "Vào lúc 10:30 thứ năm",
+  monthLabel: "Tháng 10",
+  weddingDay: "25",
+  lunarDate: "(Tức ngày 16 tháng 9 âm Bính Ngọ)",
+  venueName: "nhà riêng",
+  venueAddress: "số 1 ngõ 3 đường Trục, Quảng Minh, Tam Hưng, Hà Nội",
+  venueAddressDisplay: "(số 1 ngõ 3 đường Trục, Quảng Minh, Tam Hưng, Hà Nội)",
+  brideBirthDate: "12/05/2000",
+  groomBirthDate: "20/10/1999",
+  brideProfileHometown: "TP. Hà Nội",
+  groomProfileHometown: "TP. Hà Nội",
+  brideProfileLabel: "Bride",
+  groomProfileLabel: "Groom",
+  scheduleHeading: "Save the date",
+  scheduleMonthYear: "2026 / Oct",
+  scheduleItems: [
+    "08:00 : Lễ Rước Dâu",
+    "09:30 : Chụp hình lưu niệm",
+    "10:30 : Khai tiệc",
+  ],
+  brideBankDetails: "MB Bank : 012345678",
+  groomBankDetails: "MB Bank : 012345678",
+  calendarYearLabel: "NĂM 2026",
+  mapButtonLabel: "Xem đường đi",
+};
+
+window.WEDDING_TEXT_REPLACEMENTS = [
+  {
+    label: "Lời chào",
+    match: "Gửi đến gia đình và bạn bè thân mến,",
+    text: "Gửi đến gia đình và bạn bè thân mến,",
+  },
+  {
+    label: "Lời cảm ơn",
+    match:
+      "Cảm ơn bạn đã dành thời gian quý báu để cùng chúng mình chung vui trong ngày đặc biệt này. Chúng mình vô cùng biết ơn vì luôn có sự đồng hành và ủng hộ của bạn, và thật vinh hạnh khi được chia sẻ niềm hạnh phúc của chúng mình cùng bạn.",
+    text:
+      "Cảm ơn bạn đã dành thời gian quý báu để cùng chúng mình chung vui trong ngày đặc biệt này. Chúng mình vô cùng biết ơn vì luôn có sự đồng hành và ủng hộ của bạn, và thật vinh hạnh khi được chia sẻ niềm hạnh phúc của chúng mình cùng bạn.",
+  },
+  {
+    label: "Lời mời",
+    match: "Trân trọng kính mời bạn đến dự lễ cưới của chúng mình",
+    text: "Trân trọng kính mời bạn đến dự lễ cưới của chúng mình",
+  },
+  {
+    label: "Lời nhắn cuối thiệp",
+    match:
+      "Mình rất muốn được chụp chung với bạn những tấm hình kỷ niệm vì vậy hãy đến sớm hơn một chút bạn yêu nhé! Đám cưới của chúng mình sẽ trọn vẹn hơn khi có thêm lời chúc phúc và sự hiện diện của các bạn",
+    text:
+      "Mình rất muốn được chụp chung với bạn những tấm hình kỷ niệm vì vậy hãy đến sớm hơn một chút bạn yêu nhé! Đám cưới của chúng mình sẽ trọn vẹn hơn khi có thêm lời chúc phúc và sự hiện diện của các bạn",
+  },
+  { label: "Tiêu đề lễ", match: "Thành", text: "Thành" },
+  { label: "Tiêu đề lễ", match: "Hôn", text: "Hôn" },
+  { label: "Câu trang trí", match: "SWEET WEDDING", text: "SWEET WEDDING" },
+  { label: "Câu trang trí", match: "marry", text: "marry" },
+  { label: "Câu trang trí", match: "me?", text: "me?" },
+  { label: "Câu trang trí", match: "yes", text: "yes" },
+  { label: "Nút quà mừng", match: "gửi quà mừng", text: "gửi quà mừng" },
+  { label: "Tiêu đề hồ sơ", match: "About us", text: "About us" },
+  {
+    label: "Chữ trang trí",
+    match: "I love you forever",
+    text: "I love you forever",
+  },
+  {
+    label: "Chữ trang trí",
+    match: "Nice to meet you",
+    text: "Nice to meet you",
+  },
+  { label: "Nhãn cô dâu", match: "Cô dâu", text: "Cô dâu" },
+  { label: "Nhãn chú rể", match: "Chú rể", text: "Chú rể" },
+  { label: "Lời cảm ơn cuối thiệp", match: "Thank you", text: "Thank you" },
+  {
+    label: "Hướng dẫn mở thiệp",
+    match: "Chạm để mở thiệp",
+    text: "Chạm để mở thiệp",
+  },
+  {
+    label: "Tiêu đề xác nhận tham dự",
+    match: "Xác nhận tham dự",
+    text: "Xác nhận tham dự",
+  },
+  { label: "Nhãn họ tên", match: "Họ và tên", text: "Họ và tên" },
+  {
+    label: "Câu hỏi tham dự",
+    match: "Bạn sẽ tham dự chứ?",
+    text: "Bạn sẽ tham dự chứ?",
+  },
+  {
+    label: "Lựa chọn tham dự",
+    match: "Có, tôi sẽ tham dự",
+    text: "Có, tôi sẽ tham dự",
+  },
+  {
+    label: "Lựa chọn từ chối",
+    match: "Tôi bận, rất tiếc không thể tham dự",
+    text: "Tôi bận, rất tiếc không thể tham dự",
+  },
+  {
+    label: "Nhãn số lượng khách",
+    match: "Số lượng người tham dự",
+    text: "Số lượng người tham dự",
+  },
+  ...Array.from({ length: 10 }, (_, index) => ({
+    label: "Lựa chọn số lượng khách",
+    match: `${index + 1} người`,
+    text: `${index + 1} người`,
+  })),
+  { label: "Nhãn nút gửi RSVP", match: "Gửi xác nhận", text: "Gửi xác nhận" },
+  { label: "Đơn vị đếm ngày", match: "ngày", text: "ngày" },
+  { label: "Đơn vị đếm giờ", match: "giờ", text: "giờ" },
+  { label: "Đơn vị đếm phút", match: "phút", text: "phút" },
+  { label: "Đơn vị đếm giây", match: "giây", text: "giây" },
+];
+
 window.WEDDING_PHOTO_FILES = {
   "0660702c-af3c-42e6-8978-b23bf1e51c39.jpg": "images/anh1.jpg",
   "1d098419-b484-480d-b04b-7474a34aebf0.png": "images/anh2.png",

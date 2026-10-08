@@ -26,6 +26,12 @@
 
 Không cần điền lời chúc mẫu vào Sheet. Hãy hạn chế quyền chỉnh sửa Sheet chỉ cho chủ sở hữu; khách gửi lời chúc và xác nhận qua website không cần quyền truy cập Sheet. Vì Web App cho phép gửi công khai, hãy kiểm tra Sheet định kỳ để xóa nội dung rác.
 
+## Chỉnh thông tin trên thiệp
+
+Mở `scripts/guestbook-config.js` và sửa các giá trị trong `window.WEDDING_INFO`. Tại đây có tên cô dâu chú rể, thông tin cha mẹ, quê quán, ngày giờ, địa điểm, lịch trình, ngày sinh và tài khoản ngân hàng. Các câu chữ, nhãn RSVP và lời mời dài nằm trong `window.WEDDING_TEXT_REPLACEMENTS`; chỉ sửa phần `text`, giữ nguyên phần `match`.
+
+Trong cùng file, bạn cũng có thể đổi tiêu đề trang, link bản đồ, nhạc nền, ảnh và URL kết nối Google Sheets. Sau khi lưu, tải lại website để xem thay đổi.
+
 ## Đổi link Google Maps
 
 Mở `scripts/guestbook-config.js` và dán link chia sẻ Google Maps vào `WEDDING_MAP_URL`:

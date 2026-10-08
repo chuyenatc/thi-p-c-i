@@ -93,6 +93,186 @@
   let status = null;
   let latestWishes = [];
 
+  const weddingInfoTargets = {
+    coverHeading: ["jEwFwxPy6x"],
+    invitationHeading: ["T_GUXbKvJQ"],
+    brideShortName: ["gGIGEA6OsO"],
+    groomShortName: ["qwGJp4zhBD"],
+    invitationSectionHeading: ["HKFOtc7D8d", "suNBAEdY_U"],
+    groomParentsHeading: ["uCv5Voh3eD"],
+    groomFather: ["fxn1f33Y3m"],
+    groomMother: ["lEdDtKu3Tk"],
+    brideParentsHeading: ["Fh53RbqNJ3"],
+    brideFather: ["PvD9attWk4"],
+    brideMother: ["UT8sz-i1-g"],
+    brideFullName: ["JBgwRLwkbL", "Z5yYxBQgzB", "iPjImtIlr4"],
+    groomFullName: ["nH7HtbJpq4", "PKNdPfREuu", "vbVsmkFNC_"],
+    brideHometown: ["tc9S5S9lDs"],
+    groomHometown: ["8B86R18A1v"],
+    receptionTitle: ["JFI-scVoG3"],
+    ceremonyTime: ["VPUtL1W7Ce"],
+    monthLabel: ["sMFaGlobqu"],
+    weddingDay: ["8lonBDS1Z_"],
+    lunarDate: ["CZJb7cjbFz"],
+    venueName: ["e3zKsoJ7VU"],
+    venueAddressDisplay: ["CKmU0S7mgD"],
+    brideBirthDate: ["xWGqZQdC7S"],
+    groomBirthDate: ["kEUw8at2wW"],
+    brideProfileHometown: ["Z_sqsL03TS"],
+    groomProfileHometown: ["E545CI_VBk"],
+    brideProfileLabel: ["O4qFTubpPD"],
+    groomProfileLabel: ["3TmdZATszZ"],
+    scheduleHeading: ["niEXlWBSJN"],
+    scheduleMonthYear: ["dgk-5_grgZ"],
+    brideBankDetails: ["t0Ya66JrSt"],
+    groomBankDetails: ["D5MLJCGR1T"],
+    calendarYearLabel: ["vaCj1ozsWu"],
+  };
+  const scheduleItemTargets = [
+    ["4Q3-6-pwwI"],
+    ["pr66tJKC64"],
+    ["scGhyU0cqJ"],
+  ];
+  const weddingSingleLineKeys = new Set([
+    "brideShortName",
+    "groomShortName",
+    "brideFullName",
+    "groomFullName",
+    "venueAddressDisplay",
+  ]);
+  const weddingParentNameGroups = [
+    ["fxn1f33Y3m", "PvD9attWk4"],
+    ["lEdDtKu3Tk", "UT8sz-i1-g"],
+  ];
+
+  function setTextContent(element, value) {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let textNode = walker.nextNode();
+    while (textNode) {
+      textNodes.push(textNode);
+      textNode = walker.nextNode();
+    }
+    if (!textNodes.length) return;
+    if (textNodes[0].nodeValue !== value) textNodes[0].nodeValue = value;
+    textNodes.slice(1).forEach((node) => {
+      if (node.nodeValue) node.nodeValue = "";
+    });
+  }
+
+  function setTextByNodeId(nodeId, value) {
+    if (typeof value !== "string") return;
+    document
+      .querySelectorAll(`[data-node-id="${nodeId}"]`)
+      .forEach((element) => setTextContent(element, value));
+  }
+
+  function applyWeddingInfo() {
+    const info = window.WEDDING_INFO;
+    if (!info || typeof info !== "object") return;
+
+    if (typeof info.pageTitle === "string" && document.title !== info.pageTitle) {
+      document.title = info.pageTitle;
+    }
+    Object.entries(weddingInfoTargets).forEach(([key, nodeIds]) => {
+      nodeIds.forEach((nodeId) => {
+        setTextByNodeId(nodeId, info[key]);
+        if (weddingSingleLineKeys.has(key)) fitWeddingName(nodeId);
+      });
+    });
+    weddingParentNameGroups.forEach(fitWeddingNamesTogether);
+    if (Array.isArray(info.scheduleItems)) {
+      scheduleItemTargets.forEach((nodeIds, index) => {
+        nodeIds.forEach((nodeId) =>
+          setTextByNodeId(nodeId, info.scheduleItems[index])
+        );
+      });
+    }
+
+    const replacements = window.WEDDING_TEXT_REPLACEMENTS;
+    if (!Array.isArray(replacements)) return;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let textNode = walker.nextNode();
+    while (textNode) {
+      const replacement = replacements.find(
+        (item) =>
+          item &&
+          typeof item.match === "string" &&
+          typeof item.text === "string" &&
+          textNode.nodeValue.replace(/\s+/g, " ").trim() ===
+            item.match.replace(/\s+/g, " ").trim()
+      );
+      if (replacement && textNode.nodeValue !== replacement.text) {
+        textNode.nodeValue = replacement.text;
+      }
+      textNode = walker.nextNode();
+    }
+  }
+
+  function fitWeddingName(nodeId) {
+    fitWeddingNames([nodeId]);
+  }
+
+  function fitWeddingNamesTogether(nodeIds) {
+    fitWeddingNames(nodeIds);
+  }
+
+  function fitWeddingNames(nodeIds) {
+    const names = nodeIds.flatMap((nodeId) =>
+      Array.from(
+        document.querySelectorAll(
+          `.text-box-component[data-node-id="${nodeId}"] [contenteditable="false"]`
+        )
+      )
+    );
+    const measurements = names
+      .map((name) => {
+        const baseFontSize =
+          Number(name.dataset.weddingBaseFontSize) ||
+          parseFloat(name.style.fontSize);
+        if (!Number.isFinite(baseFontSize) || baseFontSize <= 0) return null;
+        if (!name.dataset.weddingBaseFontSize) {
+          name.dataset.weddingBaseFontSize = String(baseFontSize);
+        }
+        name.style.whiteSpace = "nowrap";
+        name.style.wordBreak = "normal";
+        name.style.fontSize = `${baseFontSize}px`;
+
+        const availableWidth = name.clientWidth;
+        const textWidth = name.scrollWidth;
+        const maximumFontSize =
+          availableWidth > 0 && textWidth > availableWidth
+            ? baseFontSize * (availableWidth / textWidth) * 0.98
+            : baseFontSize;
+        return { name, baseFontSize, availableWidth, maximumFontSize };
+      })
+      .filter(Boolean);
+
+    const sharedFontSize =
+      nodeIds.length > 1 && measurements.length
+        ? Math.max(
+            6,
+            Math.min(...measurements.map((measurement) => measurement.maximumFontSize))
+          )
+        : null;
+
+    measurements.forEach(
+      ({ name, baseFontSize, availableWidth, maximumFontSize }) => {
+        if (nodeIds.length > 1) {
+          name.style.fontSize = `${Math.min(
+            baseFontSize,
+            sharedFontSize,
+            maximumFontSize
+          )}px`;
+        } else if (maximumFontSize < baseFontSize) {
+          name.style.fontSize = `${Math.max(6, maximumFontSize)}px`;
+        }
+        name.dataset.weddingFittedText = name.textContent;
+        name.dataset.weddingFittedWidth = String(availableWidth);
+      }
+    );
+  }
+
   function setupMusic() {
     const musicUrl = String(window.WEDDING_MUSIC_URL || "").trim();
     if (!musicUrl) return;
@@ -194,7 +374,9 @@
       if (!container) return;
 
       const source = new URL(map.src);
-      const destination = source.searchParams.get("q");
+      const destination =
+        String(window.WEDDING_INFO?.venueAddress || "").trim() ||
+        source.searchParams.get("q");
       if (!destination) {
         console.error("Google Maps iframe is missing its destination.");
         return;
@@ -244,7 +426,9 @@
       link.href = mapUrl;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
-      link.textContent = "Xem đường đi";
+      link.textContent = String(
+        window.WEDDING_INFO?.mapButtonLabel || "Xem đường đi"
+      );
       link.setAttribute("aria-label", `Xem đường đi đến ${destination}`);
       mapBlock.appendChild(link);
       mapBlock.dataset.weddingMapButton = "true";
@@ -576,12 +760,25 @@
   );
 
   setupMusic();
+  applyWeddingInfo();
   removeDesignActions();
   setupGuestbook();
   replaceWeddingPhotos();
   document.addEventListener("submit", handleRsvpSubmit, true);
+  const pageTitleObserver = new MutationObserver(() => {
+    const pageTitle = String(window.WEDDING_INFO?.pageTitle || "").trim();
+    if (pageTitle && document.title !== pageTitle) {
+      document.title = pageTitle;
+    }
+  });
+  pageTitleObserver.observe(document.head, {
+    characterData: true,
+    childList: true,
+    subtree: true,
+  });
   const observer = new MutationObserver(() => {
     setupMusic();
+    applyWeddingInfo();
     setupGuestbook();
     setupMapsButton();
     cleanMapPlaceholders();
@@ -595,4 +792,5 @@
     subtree: true,
   });
   setupMapsButton();
+  window.addEventListener("resize", applyWeddingInfo);
 })();
