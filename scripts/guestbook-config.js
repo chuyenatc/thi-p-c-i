@@ -1,4 +1,4 @@
-window.WEDDING_GUESTBOOK_ENDPOINT = "";
+window.WEDDING_GUESTBOOK_ENDPOINT = "https://script.google.com/macros/s/AKfycbyLyRKn1I8H6iJT7OucN3hii8xYJZeYW27w-lBTuL-ZHkJKFKv0MF9HYT5WEm33pdU/exec";
 // Đường dẫn tương đối tới file nhạc trong thư mục music.
 window.WEDDING_MUSIC_URL = "music/chuynn.mp3";
 window.WEDDING_MAP_URL = "https://www.google.com/maps/place/20%C2%B054'39.6%22N+105%C2%B047'46.6%22E/@20.911016,105.7937061,17z/data=!3m1!4b1!4m4!3m3!8m2!3d20.911011!4d105.796281?entry=ttu&g_ep=EgoyMDI2MTAwNC4wIKXMDSoASAFQAw%3D%3D";
@@ -29,22 +29,50 @@ window.WEDDING_INFO = {
   lunarDate: "(Tức ngày 16 tháng 9 âm Bính Ngọ)",
   venueName: "nhà riêng",
   venueAddress: "số 1 ngõ 3 đường Trục, Quảng Minh, Tam Hưng, Hà Nội",
-  venueAddressDisplay: "(số 1 ngõ 3 đường Trục, Quảng Minh, Tam Hưng, Hà Nội)",
+  venueAddressDisplay: "số 1 ngõ 3 đường Trục, Quảng Minh, Tam Hưng, Hà Nội",
   brideBirthDate: "12/05/2000",
   groomBirthDate: "20/10/1999",
   brideProfileHometown: "TP. Hà Nội",
   groomProfileHometown: "TP. Hà Nội",
   brideProfileLabel: "Bride",
   groomProfileLabel: "Groom",
+  
+  // Thông báo cảm ơn
+  wishThankYouText: "Cảm ơn bạn đã gửi lời chúc tốt đẹp nhất đến chúng mình!",
+  rsvpThankYouText: "Cảm ơn bạn đã phản hồi. Hẹn gặp bạn tại đám cưới nhé!",
+
+  // --- 
+  // Swap icons in Save the Date to match the new scheduleItems order
+  // 1: Khai tiệc (Plates)
+  // 2: Lễ Rước Dâu (Rings)
+  // 3: Chụp hình (Camera)
+  _setupIcons: (() => {
+    if (typeof document !== 'undefined') {
+      const s = document.createElement("style");
+      s.innerHTML = `
+        div[data-node-id="vn8LzVP4iL"] .photo-bg-wrap { background-image: url('images/p9r9hqnxqhoep7qg3x6ytf.png') !important; }
+        div[data-node-id="cYR1ro10__"] .photo-bg-wrap { background-image: url('images/q7j7fdbewu8o975g6btq9g.png') !important; }
+        div[data-node-id="WM1IYthsws"] .photo-bg-wrap { background-image: url('images/w4x2kkenv6f8ij6j6n44g3.png') !important; }
+        
+        /* Fix overlapping text on the 3rd schedule item (Chụp hình lưu niệm) */
+        div[data-node-id="scGhyU0cqJ"] { left: 210px !important; }
+      `;
+      document.head.appendChild(s);
+    }
+  })(),
+  // ---
+  // Tùy chỉnh kích cỡ chữ tên Cô Dâu & Chú Rể phần About Us
+  aboutUsNameFontSize: "14px",
+
   scheduleHeading: "Save the date",
   scheduleMonthYear: "2026 / Oct",
   scheduleItems: [
+    "10:30 : Khai tiệc",
     "08:00 : Lễ Rước Dâu",
     "09:30 : Chụp hình lưu niệm",
-    "10:30 : Khai tiệc",
   ],
-  brideBankDetails: "MB Bank : 012345678",
-  groomBankDetails: "MB Bank : 012345678",
+  //brideBankDetails: "MB Bank : 012345678",
+  //groomBankDetails: "MB Bank : 012345678",
   calendarYearLabel: "NĂM 2026",
   mapButtonLabel: "Xem đường đi",
 };

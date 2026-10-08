@@ -19,14 +19,15 @@
       position: fixed;
       z-index: 30;
       right: 12px;
-      bottom: 82px;
-      display: flex;
+      bottom: 125px;
+      display: none; /* hidden by default, toggled later */
       flex-direction: column;
       gap: 6px;
       width: min(420px, calc(100vw - 24px));
-      max-height: 24vh;
-      overflow: auto;
       pointer-events: none;
+    }
+    #wedding-guestbook-wishes.show-wishes {
+      display: flex !important;
     }
     #wedding-guestbook-wishes[hidden],
     #google-sheet-wish-status:empty {
@@ -35,11 +36,16 @@
     .wedding-guestbook-wish {
       padding: 8px 12px;
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 192, 203, 0.85); /* Nền hồng mờ */
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
       color: #812927;
       font: 14px/1.45 Arial, sans-serif;
       overflow-wrap: anywhere;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     #google-sheet-wish-status {
       position: fixed;
@@ -138,7 +144,15 @@
     "groomShortName",
     "brideFullName",
     "groomFullName",
+    "brideBirthDate",
+    "groomBirthDate",
+    "groomFather",
+    "groomMother",
+    "brideFather",
+    "brideMother",
     "venueAddressDisplay",
+    "brideProfileHometown",
+    "groomProfileHometown"
   ]);
   const weddingParentNameGroups = [
     ["fxn1f33Y3m", "PvD9attWk4"],
@@ -218,16 +232,13 @@
     const updatedNodeIds = new Set();
     Object.entries(weddingInfoTargets).forEach(([key, nodeIds]) => {
       nodeIds.forEach((nodeId) => {
-        if (setTextByNodeId(nodeId, info[key], root)) {
-          updatedNodeIds.add(nodeId);
-          if (weddingSingleLineKeys.has(key)) fitWeddingName(nodeId);
-        }
+        setTextByNodeId(nodeId, info[key], root);
+        updatedNodeIds.add(nodeId);
+        if (weddingSingleLineKeys.has(key)) fitWeddingName(nodeId);
       });
     });
     weddingParentNameGroups.forEach((nodeIds) => {
-      if (nodeIds.some((nodeId) => updatedNodeIds.has(nodeId))) {
-        fitWeddingNamesTogether(nodeIds);
-      }
+      fitWeddingNamesTogether(nodeIds);
     });
     if (Array.isArray(info.scheduleItems)) {
       scheduleItemTargets.forEach((nodeIds, index) => {
@@ -236,6 +247,24 @@
         );
       });
     }
+
+    // Force override calendar for October 2026
+    const calendarWrappers = queryAll(root, '.template-three');
+    calendarWrappers.forEach(cal => {
+      if (cal.querySelector('.fixedForOct2026Marker')) return;
+      
+      let html = "<div class='fixedForOct2026Marker' style='display:none'></div>";
+      // October 2026 starts on Thursday. Mon=1, Tue=2, Wed=3 -> 3 empty blocks
+      html += "<div></div>".repeat(3);
+      for (let i = 1; i <= 31; i++) {
+        if (i === 25) {
+          html += `<div style="position:relative;display:flex;align-items:center;justify-content:center;"><img class="heart-date" src="images/calen_heart_1.png" alt="heart" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;"/><div class="colorF" style="position:relative;z-index:1;color:white;">25</div></div>`;
+        } else {
+          html += `<div><div style="position:relative;z-index:1;">${i}</div></div>`;
+        }
+      }
+      cal.innerHTML = html;
+    });
 
     const replacementsByText = getTextReplacementMap();
     if (!replacementsByText) return;
@@ -251,6 +280,18 @@
       }
       textNode = walker.nextNode();
     }
+
+    if (info.aboutUsNameFontSize) {
+      ["Z5yYxBQgzB", "PKNdPfREuu"].forEach((nodeId) => {
+        document.querySelectorAll(
+          `.text-box-component[data-node-id="${nodeId}"] [contenteditable="false"]`
+        ).forEach((el) => {
+          el.style.fontSize = info.aboutUsNameFontSize;
+          el.dataset.weddingBaseFontSize = ""; // Reset to allow recalculating fit
+        });
+        fitWeddingName(nodeId);
+      });
+    }
   }
 
   function fitWeddingName(nodeId) {
@@ -259,6 +300,32 @@
 
   function fitWeddingNamesTogether(nodeIds) {
     fitWeddingNames(nodeIds);
+  }
+
+  function measureTextWidth(text, fontSize, element) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const computed = getComputedStyle(element);
+    const fontFamily = computed.fontFamily || "sans-serif";
+    const fontWeight = computed.fontWeight || "normal";
+    const fontStyle = computed.fontStyle || "normal";
+    ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+    return ctx.measureText(text).width;
+  }
+
+  function getContainerWidth(element) {
+    const textBox = element.closest(".text-box-component");
+    if (textBox) {
+      const rect = textBox.getBoundingClientRect();
+      if (rect.width > 0) return rect.width;
+    }
+    let parent = element.parentElement;
+    while (parent && parent !== document.body) {
+      const rect = parent.getBoundingClientRect();
+      if (rect.width > 0) return rect.width;
+      parent = parent.parentElement;
+    }
+    return 0;
   }
 
   function fitWeddingNames(nodeIds) {
@@ -278,12 +345,18 @@
         if (!name.dataset.weddingBaseFontSize) {
           name.dataset.weddingBaseFontSize = String(baseFontSize);
         }
-        name.style.whiteSpace = "nowrap";
-        name.style.wordBreak = "normal";
         name.style.fontSize = `${baseFontSize}px`;
 
-        const availableWidth = name.clientWidth;
-        const textWidth = name.scrollWidth;
+        const text = name.textContent || "";
+        const textWidth = measureTextWidth(text, baseFontSize, name);
+
+        let availableWidth = getContainerWidth(name);
+        if (availableWidth <= 0) availableWidth = name.clientWidth;
+        if (availableWidth <= 0) {
+          const parent = name.parentElement;
+          if (parent) availableWidth = parent.getBoundingClientRect().width;
+        }
+
         const maximumFontSize =
           availableWidth > 0 && textWidth > availableWidth
             ? baseFontSize * (availableWidth / textWidth) * 0.98
@@ -293,7 +366,7 @@
           baseFontSize,
           availableWidth,
           maximumFontSize,
-          measurementKey: `${name.textContent}|${availableWidth}|${baseFontSize}`,
+          measurementKey: `${text}|${availableWidth}|${baseFontSize}`,
         };
       })
       .filter(Boolean);
@@ -307,22 +380,26 @@
     const sharedFontSize =
       nodeIds.length > 1 && measurements.length
         ? Math.max(
-            6,
-            Math.min(...measurements.map((measurement) => measurement.maximumFontSize))
-          )
+          1,
+          Math.min(...measurements.map((measurement) => measurement.maximumFontSize))
+        )
         : null;
 
     measurements.forEach(
       ({ name, baseFontSize, availableWidth, maximumFontSize }) => {
+        let finalSize = baseFontSize;
         if (nodeIds.length > 1) {
-          name.style.fontSize = `${Math.min(
-            baseFontSize,
-            sharedFontSize,
-            maximumFontSize
-          )}px`;
+          finalSize = Math.min(baseFontSize, sharedFontSize, maximumFontSize);
         } else if (maximumFontSize < baseFontSize) {
-          name.style.fontSize = `${Math.max(6, maximumFontSize)}px`;
+          finalSize = Math.max(1, maximumFontSize);
         }
+        name.style.fontSize = `${finalSize}px`;
+        name.style.whiteSpace = "nowrap";
+        name.style.overflow = "visible";
+        name.style.textAlign = "center";
+        name.style.display = "block";
+        name.style.width = "100%";
+
         name.dataset.weddingFittedText = name.textContent;
         name.dataset.weddingFittedWidth = String(availableWidth);
         name.dataset.weddingFittedMeasurement =
@@ -536,7 +613,7 @@
     if (!wishList) return;
 
     wishList.replaceChildren();
-    latestWishes.slice(0, 5).forEach((wish) => {
+    latestWishes.slice(0, 3).forEach((wish) => {
       const message = document.createElement("div");
       message.className = "wedding-guestbook-wish";
       const name = document.createElement("strong");
@@ -610,8 +687,47 @@
       status.setAttribute("role", "status");
       status.setAttribute("aria-live", "polite");
       document.body.appendChild(status);
+
+      // Create toggle label
+      const toggleLabel = document.createElement("label");
+      toggleLabel.id = "wish-toggle-label";
+      toggleLabel.style.cssText = "position:fixed;bottom:82px;right:12px;z-index:40;display:flex;align-items:center;background:rgba(255,192,203,0.9);padding:6px 12px;border-radius:20px;cursor:pointer;font-size:13px;color:#812927;box-shadow:0 2px 5px rgba(0,0,0,0.2);font-family:Arial,sans-serif;";
+      const toggleInput = document.createElement("input");
+      toggleInput.type = "checkbox";
+      toggleInput.style.marginRight = "6px";
+      toggleInput.onchange = (e) => {
+        if (e.target.checked) {
+          wishList.classList.add("show-wishes");
+        } else {
+          wishList.classList.remove("show-wishes");
+        }
+      };
+      toggleLabel.appendChild(toggleInput);
+      toggleLabel.appendChild(document.createTextNode("Hiện lời chúc"));
+      document.body.appendChild(toggleLabel);
+
       loadWishes();
+
+      // Auto cycle wishes
+      setInterval(() => {
+        if (latestWishes.length > 3) {
+          latestWishes.push(latestWishes.shift());
+          renderWishes();
+        }
+      }, 3500);
     }
+  }
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.textContent = message;
+    toast.style.cssText = "position:fixed;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:12px 24px;border-radius:24px;z-index:9999;font-size:14px;transition:opacity 0.4s;opacity:0;font-family:Arial,sans-serif;text-align:center;max-width:80%;";
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.style.opacity = "1");
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
   }
 
   function statusElement() {
@@ -656,7 +772,8 @@
       { name, message },
       () => {
         addWishToList(name, message);
-        currentStatus.textContent = "Đã lưu lời chúc. Cảm ơn bạn!";
+        currentStatus.textContent = "";
+        showToast(window.WEDDING_INFO.wishThankYouText || "Đã lưu lời chúc. Cảm ơn bạn!");
         nameInput.value = "";
         messageInput.value = "";
         const closeButton = popup.querySelector(".icon-guanbi");
@@ -677,75 +794,37 @@
       return;
     }
 
-    const requestId = `${kind}_${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2)}`;
-    const frame = document.createElement("iframe");
-    frame.name = requestId;
-    frame.title = "Kết quả gửi biểu mẫu";
-    frame.hidden = true;
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = baseUrl;
-    form.target = requestId;
-    form.hidden = true;
-
-    [
-      ["kind", kind],
-      ["requestId", requestId],
-      ...Object.entries(values),
-    ].forEach(([key, value]) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = key;
-      input.value = String(value);
-      form.appendChild(input);
+    const formData = new URLSearchParams();
+    formData.append("kind", kind);
+    formData.append("requestId", `${kind}_${Date.now()}`);
+    Object.entries(values).forEach(([key, value]) => {
+      formData.append(key, String(value));
     });
 
     button.disabled = true;
     status.textContent = kind === "rsvp"
       ? "Đang lưu xác nhận tham dự..."
       : "Đang gửi lời chúc...";
-    document.body.append(frame, form);
 
-    const cleanup = () => {
-      window.removeEventListener("message", handleResponse);
-      window.clearTimeout(timeout);
-      frame.remove();
-      form.remove();
-      button.disabled = false;
-    };
-    const handleResponse = (event) => {
-      if (
-        event.source !== frame.contentWindow ||
-        !event.data ||
-        event.data.type !== "wedding-form-result" ||
-        event.data.kind !== kind ||
-        event.data.requestId !== requestId
-      ) {
-        return;
-      }
-      cleanup();
-      if (!event.data.ok) {
+    fetch(baseUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData.toString()
+    })
+      .then(() => {
+        onSuccess();
+      })
+      .catch((error) => {
+        console.error("Unable to submit wedding form:", error);
+        status.textContent = "Không gửi được dữ liệu. Vui lòng thử lại.";
         onFailure();
-        return;
-      }
-      onSuccess();
-    };
-    const timeout = window.setTimeout(() => {
-      cleanup();
-      status.textContent =
-        "Gửi dữ liệu bị quá thời gian chờ. Kiểm tra kết nối rồi thử lại.";
-    }, 20000);
-
-    window.addEventListener("message", handleResponse);
-    try {
-      form.submit();
-    } catch (error) {
-      cleanup();
-      status.textContent = "Không gửi được dữ liệu. Vui lòng thử lại.";
-      console.error("Unable to submit wedding form:", error);
-    }
+      })
+      .finally(() => {
+        button.disabled = false;
+      });
   }
 
   function handleRsvpSubmit(event) {
@@ -786,7 +865,8 @@
       "rsvp",
       { name, attendance, attendeeCount },
       () => {
-        status.textContent = "Đã lưu xác nhận tham dự. Cảm ơn bạn!";
+        status.textContent = "";
+        showToast(window.WEDDING_INFO.rsvpThankYouText || "Đã lưu xác nhận tham dự. Cảm ơn bạn!");
         form.reset();
       },
       () => {
@@ -915,7 +995,12 @@
     childList: true,
     subtree: true,
   });
-  window.addEventListener("load", () => applyWeddingInfo(), { once: true });
+  window.addEventListener("load", () => {
+    applyWeddingInfo();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => applyWeddingInfo());
+    }
+  }, { once: true });
   setupMapsButton();
   let resizeFrame = 0;
   window.addEventListener("resize", () => {
