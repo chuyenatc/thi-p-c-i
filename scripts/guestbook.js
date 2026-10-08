@@ -144,6 +144,27 @@
     ["fxn1f33Y3m", "PvD9attWk4"],
     ["lEdDtKu3Tk", "UT8sz-i1-g"],
   ];
+  let cachedTextReplacements = null;
+  let cachedTextReplacementSource = null;
+
+  function queryAll(root, selector) {
+    const elements = [];
+    if (root instanceof Element && root.matches(selector)) {
+      elements.push(root);
+    }
+    if (root.querySelectorAll) {
+      elements.push(...root.querySelectorAll(selector));
+    }
+    return elements;
+  }
+
+  function setWeddingPageTitle() {
+    document.head.querySelectorAll("meta[content]").forEach((meta) => {
+      if (/thiep-cuoi-42|42\s*-\s*Thiệp cưới online miễn phí/i.test(meta.content)) {
+        meta.remove();
+      }
+    });
+  }
 
   function setTextContent(element, value) {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -160,50 +181,73 @@
     });
   }
 
-  function setTextByNodeId(nodeId, value) {
-    if (typeof value !== "string") return;
-    document
-      .querySelectorAll(`[data-node-id="${nodeId}"]`)
-      .forEach((element) => setTextContent(element, value));
+  function setTextByNodeId(nodeId, value, root = document) {
+    if (typeof value !== "string") return false;
+    const targets = queryAll(root, `[data-node-id="${nodeId}"]`);
+    targets.forEach((element) => setTextContent(element, value));
+    return targets.length > 0;
   }
 
-  function applyWeddingInfo() {
+  function getTextReplacementMap() {
+    const replacements = window.WEDDING_TEXT_REPLACEMENTS;
+    if (!Array.isArray(replacements)) return null;
+    if (replacements !== cachedTextReplacementSource) {
+      cachedTextReplacementSource = replacements;
+      cachedTextReplacements = new Map();
+      replacements.forEach((item) => {
+        if (
+          !item ||
+          typeof item.match !== "string" ||
+          typeof item.text !== "string"
+        ) {
+          return;
+        }
+        const normalizedMatch = item.match.replace(/\s+/g, " ").trim();
+        if (!cachedTextReplacements.has(normalizedMatch)) {
+          cachedTextReplacements.set(normalizedMatch, item.text);
+        }
+      });
+    }
+    return cachedTextReplacements;
+  }
+
+  function applyWeddingInfo(root = document) {
     const info = window.WEDDING_INFO;
     if (!info || typeof info !== "object") return;
 
-    if (typeof info.pageTitle === "string" && document.title !== info.pageTitle) {
-      document.title = info.pageTitle;
-    }
+    const updatedNodeIds = new Set();
     Object.entries(weddingInfoTargets).forEach(([key, nodeIds]) => {
       nodeIds.forEach((nodeId) => {
-        setTextByNodeId(nodeId, info[key]);
-        if (weddingSingleLineKeys.has(key)) fitWeddingName(nodeId);
+        if (setTextByNodeId(nodeId, info[key], root)) {
+          updatedNodeIds.add(nodeId);
+          if (weddingSingleLineKeys.has(key)) fitWeddingName(nodeId);
+        }
       });
     });
-    weddingParentNameGroups.forEach(fitWeddingNamesTogether);
+    weddingParentNameGroups.forEach((nodeIds) => {
+      if (nodeIds.some((nodeId) => updatedNodeIds.has(nodeId))) {
+        fitWeddingNamesTogether(nodeIds);
+      }
+    });
     if (Array.isArray(info.scheduleItems)) {
       scheduleItemTargets.forEach((nodeIds, index) => {
         nodeIds.forEach((nodeId) =>
-          setTextByNodeId(nodeId, info.scheduleItems[index])
+          setTextByNodeId(nodeId, info.scheduleItems[index], root)
         );
       });
     }
 
-    const replacements = window.WEDDING_TEXT_REPLACEMENTS;
-    if (!Array.isArray(replacements)) return;
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const replacementsByText = getTextReplacementMap();
+    if (!replacementsByText) return;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let textNode = walker.nextNode();
     while (textNode) {
-      const replacement = replacements.find(
-        (item) =>
-          item &&
-          typeof item.match === "string" &&
-          typeof item.text === "string" &&
-          textNode.nodeValue.replace(/\s+/g, " ").trim() ===
-            item.match.replace(/\s+/g, " ").trim()
+      const replacement = replacementsByText.get(
+        textNode.nodeValue.replace(/\s+/g, " ").trim()
       );
-      if (replacement && textNode.nodeValue !== replacement.text) {
-        textNode.nodeValue = replacement.text;
+      if (replacement !== undefined && textNode.nodeValue !== replacement) {
+        textNode.nodeValue = replacement;
       }
       textNode = walker.nextNode();
     }
@@ -244,9 +288,21 @@
           availableWidth > 0 && textWidth > availableWidth
             ? baseFontSize * (availableWidth / textWidth) * 0.98
             : baseFontSize;
-        return { name, baseFontSize, availableWidth, maximumFontSize };
+        return {
+          name,
+          baseFontSize,
+          availableWidth,
+          maximumFontSize,
+          measurementKey: `${name.textContent}|${availableWidth}|${baseFontSize}`,
+        };
       })
       .filter(Boolean);
+
+    const groupsNeedUpdate = measurements.some(
+      ({ name, measurementKey }) =>
+        name.dataset.weddingFittedMeasurement !== measurementKey
+    );
+    if (!groupsNeedUpdate) return;
 
     const sharedFontSize =
       nodeIds.length > 1 && measurements.length
@@ -269,17 +325,21 @@
         }
         name.dataset.weddingFittedText = name.textContent;
         name.dataset.weddingFittedWidth = String(availableWidth);
+        name.dataset.weddingFittedMeasurement =
+          `${name.textContent}|${availableWidth}|${baseFontSize}`;
       }
     );
   }
 
-  function setupMusic() {
+  function setupMusic(root = document) {
     const musicUrl = String(window.WEDDING_MUSIC_URL || "").trim();
     if (!musicUrl) return;
 
-    const audio = document.querySelector("#app-view-index audio");
+    const audio = queryAll(root, "#app-view-index audio")[0];
     if (!audio) {
-      console.error("Wedding music audio element is missing.");
+      if (root === document) {
+        console.error("Wedding music audio element is missing.");
+      }
       return;
     }
 
@@ -289,7 +349,7 @@
     }
   }
 
-  function removeDesignActions() {
+  function removeDesignActions(root = document) {
     const designActionLabels = new Set([
       "lưu thiết kế",
       "chỉnh sửa thiết kế",
@@ -298,7 +358,7 @@
       "thêm vào yêu thích",
     ]);
 
-    document.querySelectorAll('button, [role="button"]').forEach((button) => {
+    queryAll(root, 'button, [role="button"]').forEach((button) => {
       const labels = [
         button.textContent,
         button.getAttribute("aria-label"),
@@ -336,15 +396,7 @@
   }
 
   function replaceWeddingPhotos(root = document) {
-    const elements = [];
-    if (root instanceof Element && root.matches("img,[style]")) {
-      elements.push(root);
-    }
-    if (root.querySelectorAll) {
-      elements.push(...root.querySelectorAll("img,[style]"));
-    }
-
-    elements.forEach((element) => {
+    queryAll(root, "img,[style]").forEach((element) => {
       if (element instanceof HTMLImageElement) {
         const source = element.getAttribute("src");
         const localSource = source && photoPath(source);
@@ -368,8 +420,8 @@
     });
   }
 
-  function setupMapsButton() {
-    document.querySelectorAll('iframe[src*="maps.google.com/maps"]').forEach((map) => {
+  function setupMapsButton(root = document) {
+    queryAll(root, 'iframe[src*="maps.google.com/maps"]').forEach((map) => {
       const container = map.parentElement;
       if (!container) return;
 
@@ -475,9 +527,8 @@
     });
   }
 
-  function cleanMapPlaceholders() {
-    document
-      .querySelectorAll('[data-wedding-map-button="true"]')
+  function cleanMapPlaceholders(root = document) {
+    queryAll(root, '[data-wedding-map-button="true"]')
       .forEach(removeMapPlaceholder);
   }
 
@@ -760,37 +811,123 @@
   );
 
   setupMusic();
+  setWeddingPageTitle();
   applyWeddingInfo();
   removeDesignActions();
   setupGuestbook();
   replaceWeddingPhotos();
   document.addEventListener("submit", handleRsvpSubmit, true);
-  const pageTitleObserver = new MutationObserver(() => {
-    const pageTitle = String(window.WEDDING_INFO?.pageTitle || "").trim();
-    if (pageTitle && document.title !== pageTitle) {
-      document.title = pageTitle;
-    }
-  });
-  pageTitleObserver.observe(document.head, {
-    characterData: true,
-    childList: true,
-    subtree: true,
-  });
-  const observer = new MutationObserver(() => {
-    setupMusic();
-    applyWeddingInfo();
-    setupGuestbook();
-    setupMapsButton();
-    cleanMapPlaceholders();
-    replaceWeddingPhotos();
-    removeDesignActions();
+  const pendingRoots = new Set();
+  const pendingPhotoElements = new Set();
+  const pendingMapElements = new Set();
+  let mutationFrame = 0;
+
+  const scheduleMutationWork = () => {
+    if (mutationFrame) return;
+    mutationFrame = window.requestAnimationFrame(() => {
+      mutationFrame = 0;
+      const roots = Array.from(pendingRoots).filter(
+        (root) =>
+          !Array.from(pendingRoots).some(
+            (otherRoot) => otherRoot !== root && otherRoot.contains(root)
+          )
+      );
+      pendingRoots.clear();
+      roots.forEach((root) => {
+        applyWeddingInfo(root);
+        setupMusic(root);
+        removeDesignActions(root);
+        replaceWeddingPhotos(root);
+        setupMapsButton(root);
+        cleanMapPlaceholders(root);
+      });
+
+      pendingPhotoElements.forEach((element) => {
+        if (!roots.some((root) => root === element || root.contains(element))) {
+          replaceWeddingPhotos(element);
+        }
+      });
+      pendingPhotoElements.clear();
+
+      pendingMapElements.forEach((element) => {
+        if (!roots.some((root) => root === element || root.contains(element))) {
+          setupMapsButton(element);
+        }
+      });
+      pendingMapElements.clear();
+    });
+  };
+
+  const observer = new MutationObserver((records) => {
+    records.forEach((record) => {
+      if (record.type === "characterData") {
+        const parent = record.target.parentElement;
+        const root = parent?.closest("[data-node-id]") || parent;
+        if (root) pendingRoots.add(root);
+        scheduleMutationWork();
+        return;
+      }
+      if (record.type === "attributes") {
+        if (!(record.target instanceof Element)) return;
+        if (record.attributeName === "style") {
+          const background =
+            record.target instanceof HTMLElement
+              ? record.target.style.backgroundImage
+              : "";
+          const photoFiles = window.WEDDING_PHOTO_FILES || {};
+          if (
+            !background ||
+            !Object.keys(photoFiles).some((filename) =>
+              background.includes(filename)
+            )
+          ) {
+            return;
+          }
+        }
+        pendingPhotoElements.add(record.target);
+        if (
+          record.attributeName === "src" &&
+          record.target.matches('iframe[src*="maps.google.com/maps"]')
+        ) {
+          pendingMapElements.add(record.target);
+        }
+        scheduleMutationWork();
+        return;
+      }
+      if (record.target instanceof Element) {
+        pendingRoots.add(
+          record.target.closest("[data-node-id]") || record.target
+        );
+      }
+      record.addedNodes.forEach((node) => {
+        const element = node instanceof Element ? node : node.parentElement;
+        if (element) {
+          pendingRoots.add(element.closest("[data-node-id]") || element);
+        }
+      });
+      if (record.addedNodes.length) scheduleMutationWork();
+    });
   });
   observer.observe(document.body, {
     attributes: true,
     attributeFilter: ["src", "srcset", "style"],
+    characterData: true,
     childList: true,
     subtree: true,
   });
+  window.addEventListener("load", () => applyWeddingInfo(), { once: true });
   setupMapsButton();
-  window.addEventListener("resize", applyWeddingInfo);
+  let resizeFrame = 0;
+  window.addEventListener("resize", () => {
+    if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
+    resizeFrame = window.requestAnimationFrame(() => {
+      resizeFrame = 0;
+      Object.entries(weddingInfoTargets).forEach(([key, nodeIds]) => {
+        if (weddingSingleLineKeys.has(key)) {
+          nodeIds.forEach(fitWeddingName);
+        }
+      });
+      weddingParentNameGroups.forEach(fitWeddingNamesTogether);
+    });
+  });
 })();

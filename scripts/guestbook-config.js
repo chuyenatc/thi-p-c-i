@@ -151,3 +151,26 @@ window.WEDDING_PHOTO_FILES = {
   "c4d45265-947c-414c-b53f-f291586faeea.jpg": "images/anh10.jpg",
   "f9a1916a-869c-4bc2-b2c1-f01b95c3729a.png": "images/anh11.png",
 };
+
+const weddingPageTitle = String(window.WEDDING_INFO?.pageTitle || "").trim();
+if (weddingPageTitle) {
+  const titleDescriptor = Object.getOwnPropertyDescriptor(
+    Document.prototype,
+    "title"
+  );
+  if (
+    titleDescriptor?.configurable &&
+    titleDescriptor.get &&
+    titleDescriptor.set
+  ) {
+    Object.defineProperty(Document.prototype, "title", {
+      configurable: titleDescriptor.configurable,
+      enumerable: titleDescriptor.enumerable,
+      get: titleDescriptor.get,
+      set() {
+        titleDescriptor.set.call(this, weddingPageTitle);
+      },
+    });
+    document.title = weddingPageTitle;
+  }
+}
